@@ -435,6 +435,7 @@
 
         gl.uniformMatrix4fv(viewUniform, false, view);
         gl.uniformMatrix4fv(projectUniform, false, project);
+        gl.uniform3fv(cameraUniform, cameraPos);
 
         gl.enableVertexAttribArray(gridPositionAttribute);
         gl.vertexAttribPointer(gridPositionAttribute, 2, gl.FLOAT, false, 0, 0);

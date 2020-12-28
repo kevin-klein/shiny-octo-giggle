@@ -65,14 +65,14 @@
         vec3 world_dir =
               normalize( inverse(view) * vec4(camera_dir, 0) ).xyz;
 
-        float t = cameraPos.z / -world_dir.z;
+        float t = abs(cameraPos.z / -world_dir.z);
 
         return cameraPos + t * world_dir;
     }
 
     void main()
     {
-        world_pos = toWorldPos(vec3(position.x, position.y, 0));
+        world_pos = toWorldPos(vec3(position.x, position.y, 0) * 1.2);
 
         float height = sin(world_pos.x); //texture2D(tex, world_pos.xz).r;
         world_pos.z = height;

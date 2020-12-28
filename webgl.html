@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>WebGL Demo</title>
+    <meta charset="utf-8">
+  </head>
+
+  <style media="screen">
+  /* remove the border */
+    body {
+      border: 0;
+      background-color: white;
+      margin: 0;
+    }
+    /* make the canvas the size of the viewport */
+    canvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+  </style>
+
+  <body>
+    <canvas id="glcanvas"></canvas>
+  </body>
+
+  <script type="text/javascript" src="gl-matrix.js"></script>
+  <script type="text/javascript" src="webgl-debug.js"></script>
+
+  <script id='vertex-shader-grid' type="x-shader/x-vertex">#version 300 es
+    in vec2 position;
+
+    uniform mat4 projection;
+    uniform mat4 view;
+    uniform vec3 cameraPos;
+
+    out vec3 world_pos;
+
+    vec3 toWorldPos(vec3 posScreen) {
+        vec4 vertex = vec4(posScreen, 1);
+
+        vec3 camera_dir =
+              normalize( ( inverse(projection) * vertex ).xyz );
+        vec3 world_dir =
+              normalize( inverse(view) * vec4(camera_dir, 0) ).xyz;
+
+        float t = cameraPos.y / -world_dir.y;
+
+        return cameraPos + t*world_dir;
+    }
+
+    void main()
+    {
+        world_pos = toWorldPos( vec3(position.x, 0, position.y) );
+
+        float height = 0.3; //texture2D(tex, world_pos.xz).r;
+
+        gl_Position = projection * view * vec4(world_pos, 1);
+    }
+  </script>
+
+  <script id='fragment-shader-grid' type="x-shader/x-fragment">#version 300 es
+    precision mediump float;
+
+    in vec3 world_pos;
+    out vec4 outColor;
+
+    void main() {
+      vec3 normal = normalize(cross(
+                  dFdx(world_pos.xyz),
+                  dFdy(world_pos.xyz)));
+      vec3 light = vec3(0, 1, 1);
+
+      vec3 k = vec3(1, 1, 1);
+      outColor = vec4(0, 0, 0, 1);
+
+      //vec4(1, 0, 0, 0) *
+              // dot(normalize(-light), normalize(normal));
+    }
+  </script>
+
+  <script>
+    function createProgramFromScripts(gl, shaderScriptIds) {
+      var vertexShader = createShaderFromScript(gl, shaderScriptIds[0], gl.VERTEX_SHADER);
+      var fragmentShader = createShaderFromScript(gl, shaderScriptIds[1], gl.FRAGMENT_SHADER);
+      return createProgram(gl, vertexShader, fragmentShader);
+    }
+
+    function createShaderFromScript(gl, scriptId, opt_shaderType) {
+      // look up the script tag by id.
+      var shaderScript = document.getElementById(scriptId);
+      if (!shaderScript) {
+        throw("*** Error: unknown script element " + scriptId);
+      }
+
+      // extract the contents of the script tag.
+      var shaderSource = shaderScript.text;
+
+      // If we didn't pass in a type, use the 'type' from
+      // the script tag.
+      if (!opt_shaderType) {
+        if (shaderScript.type == "x-shader/x-vertex") {
+          opt_shaderType = gl.VERTEX_SHADER;
+        } else if (shaderScript.type == "x-shader/x-fragment") {
+          opt_shaderType = gl.FRAGMENT_SHADER;
+        } else if (!opt_shaderType) {
+          throw("*** Error: shader type not set");
+        }
+      }
+
+      return createShader(gl, shaderSource, opt_shaderType);
+    };
+
+    function resize(canvas) {
+      // Lookup the size the browser is displaying the canvas.
+      var displayWidth  = canvas.clientWidth;
+      var displayHeight = canvas.clientHeight;
+
+      // Check if the canvas is not the same size.
+      if (canvas.width  != displayWidth ||
+          canvas.height != displayHeight) {
+
+        // Make the canvas the same size
+        canvas.width  = displayWidth;
+        canvas.height = displayHeight;
+      }
+    }
+
+    function createShader(gl, source, type) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+      if(success) {
+        return shader;
+      }
+
+      console.log(gl.getShaderInfoLog(shader));
+      gl.deleteShader(shader);
+    }
+
+    function createProgram(gl, vertexShader, fragmentShader) {
+      const program = gl.createProgram();
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+
+      const success = gl.getProgramParameter(program, gl.LINK_STATUS);
+      if(success) {
+        return program;
+      }
+
+      console.log(gl.getProgramInfoLog(program));
+      gl.deleteProgram(program);
+    }
+
+    function createGrid(gl) {
+      const indexBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+      let indices = [];
+
+      for(let i=0; i<9; i++) {
+        for(let j=0; j<9; j++) {
+          indices.push(i + j * 10);
+          indices.push((i+1) + j * 10);
+          indices.push(i + (j+1) * 10);
+
+          indices.push((i+1) + j * 10);
+          indices.push((i+1) + (j+1) * 10);
+          indices.push(i + (j+1) * 10);
+        }
+      }
+
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+      let vertices = [];
+      for(let i=0; i<10; i++) {
+        for(let j=0; j<10; j++) {
+          vertices.push((i / 9 * 2) - 1);
+          vertices.push((j / 9 * 2) - 1);
+        }
+      }
+
+      const vertexBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+      const size = indices.length;
+
+      return {
+        vertexBuffer,
+        indexBuffer,
+        size,
+      }
+    }
+
+
+    //
+    // Start here
+    //
+    function main() {
+      const canvas = document.querySelector('#glcanvas');
+
+      const gl = WebGLDebugUtils.makeDebugContext(canvas.getContext('webgl2'));
+
+      if (!gl) {
+        alert('Unable to initialize WebGL. Your browser or machine may not support it.');
+        return;
+      }
+
+      const grid = createGrid(gl);
+
+      const gridProgram = createProgramFromScripts(gl, ['vertex-shader-grid', 'fragment-shader-grid']);
+      const gridPositionAttribute = gl.getAttribLocation(gridProgram, 'position');
+
+      gl.useProgram(gridProgram);
+
+      const project = glMatrix.mat4.create();
+      glMatrix.mat4.perspective(project, 90, 16 / 9, 1 / 256, 256);
+      const projectUniform = gl.getUniformLocation(gridProgram, "projection");
+      gl.uniformMatrix4fv(projectUniform, false, project);
+
+      const view = glMatrix.mat4.create();
+      glMatrix.mat4.lookAt(view, glMatrix.vec3.fromValues(0, 2, 2), glMatrix.vec3.fromValues(0, 0, 0), glMatrix.vec3.fromValues(0, 0, 1));
+      const viewUniform = gl.getUniformLocation(gridProgram, "view");
+      gl.uniformMatrix4fv(viewUniform, false, view);
+
+      const cameraPos = glMatrix.vec3.fromValues(0, 2, 2);
+      const cameraUniform = gl.getUniformLocation(gridProgram, "cameraPos");
+      gl.uniform3fv(cameraUniform, cameraPos);
+
+      function drawScene() {
+        const canvas = document.querySelector('#glcanvas');
+        resize(canvas);
+
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(gridProgram);
+        gl.bindBuffer(gl.ARRAY_BUFFER, grid.vertexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, grid.indexBuffer);
+
+        gl.enableVertexAttribArray(gridPositionAttribute);
+        gl.vertexAttribPointer(gridPositionAttribute, 2, gl.FLOAT, false, 0, 0);
+
+        gl.drawElements(gl.TRIANGLES, grid.size, gl.UNSIGNED_SHORT, 0);
+
+        requestAnimationFrame(drawScene);
+      }
+
+      requestAnimationFrame(drawScene);
+    }
+
+    main();
+  </script>
+</html>

@@ -75,7 +75,7 @@
         world_pos = toWorldPos(vec3(position.x, position.y, 0));
 
         float height = normalize(sin(world_pos.x)); //texture2D(tex, world_pos.xz).r;
-        world_pos.z = .0;
+        world_pos.z = height;
 
         gl_Position = projection * view * vec4(world_pos, 1);
     }

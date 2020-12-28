@@ -343,7 +343,7 @@
         resize(canvas);
 
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        glMatrix.mat4.perspective(project, 90, gl.canvas.width / gl.canvas.height, 1 / 256, 256);
+        glMatrix.mat4.perspective(project, glMatrix.glMatrix.toRadian(60), gl.canvas.width / gl.canvas.height, 1 / 256, 256);
 
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);

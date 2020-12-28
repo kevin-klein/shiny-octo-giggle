@@ -74,7 +74,7 @@
     {
         world_pos = toWorldPos(vec3(position.x, position.y, 0));
 
-        float height = normalize(sin(world_pos.x)); //texture2D(tex, world_pos.xz).r;
+        float height = sin(world_pos.x); //texture2D(tex, world_pos.xz).r;
         world_pos.z = height;
 
         gl_Position = projection * view * vec4(world_pos, 1);
@@ -410,6 +410,10 @@
         resize(canvas);
 
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LESS);
+
         glMatrix.mat4.perspective(project, FIELD_OF_VIEW, gl.canvas.width / gl.canvas.height, 1 / 256, 256);
         const inFrontOfCamera = [];
 

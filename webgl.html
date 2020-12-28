@@ -290,7 +290,7 @@
       const projectUniform = gl.getUniformLocation(gridProgram, "projection");
       gl.uniformMatrix4fv(projectUniform, false, project);
 
-      let cameraPos = glMatrix.vec3.fromValues(0, 2, 2);
+      let cameraPos = glMatrix.vec3.fromValues(0, 5, 2);
       let view = glMatrix.mat4.create();
       glMatrix.mat4.lookAt(view, cameraPos, glMatrix.vec3.fromValues(0, 0, 0), glMatrix.vec3.fromValues(0, 0, 1));
       const viewUniform = gl.getUniformLocation(gridProgram, "view");
@@ -332,19 +332,29 @@
         switch (event.keyCode) {
         case ARROW_LEFT:
         case KEY_A:
-          glMatrix.vec3.add(cameraPos, cameraPos, glMatrix.vec3.fromValues(1, 0, 0));
+          const leftCameraDirection = [];
+          glMatrix.vec3.cross(leftCameraDirection, glMatrix.vec3.fromValues(0, 0, 1), cameraDirection);
+          glMatrix.vec3.normalize(leftCameraDirection, leftCameraDirection);
+
+          glMatrix.vec3.add(cameraPos, cameraPos, leftCameraDirection);
           break;
         case ARROW_UP:
         case KEY_W:
-          glMatrix.vec3.add(cameraPos, cameraPos, glMatrix.vec3.fromValues(0, -1, 0));
+          glMatrix.vec3.add(cameraPos, cameraPos, cameraDirection);
           break;
         case ARROW_RIGHT:
         case KEY_D:
-          glMatrix.vec3.add(cameraPos, cameraPos, glMatrix.vec3.fromValues(-1, 0, 0));
+          const rightCameraDirection = [];
+          glMatrix.vec3.cross(rightCameraDirection, cameraDirection, glMatrix.vec3.fromValues(0, 0, 1));
+          glMatrix.vec3.normalize(rightCameraDirection, rightCameraDirection);
+
+          glMatrix.vec3.add(cameraPos, cameraPos, rightCameraDirection);
           break;
         case KEY_S:
         case ARROW_DOWN:
-          glMatrix.vec3.add(cameraPos, cameraPos, glMatrix.vec3.fromValues(0, 1, 0));
+          const negativeCameraDirection = [];
+          glMatrix.vec3.negate(negativeCameraDirection, cameraDirection);
+          glMatrix.vec3.add(cameraPos, cameraPos, negativeCameraDirection);
           break;
       }
       });
@@ -363,8 +373,8 @@
       let lastX = null;
       let lastY = null;
 
-      let theta = 0;
-      let phi = 0;
+      let theta = 90;
+      let phi = -90;
 
       window.addEventListener('mousemove', (event) => {
         if(!moveCamera) {
@@ -386,6 +396,15 @@
         phi += 0.2 * xDiff;
       });
 
+      let radiansTheta = glMatrix.glMatrix.toRadian(theta);
+      let radiansPhi = glMatrix.glMatrix.toRadian(phi);
+
+      let cameraDirection = glMatrix.vec3.fromValues(
+        Math.sin(radiansTheta) * Math.cos(radiansPhi),
+        Math.sin(radiansTheta) * Math.sin(radiansPhi),
+        Math.cos(radiansTheta)
+      );
+
       function drawScene() {
         const canvas = document.querySelector('#glcanvas');
         resize(canvas);
@@ -394,16 +413,16 @@
         glMatrix.mat4.perspective(project, FIELD_OF_VIEW, gl.canvas.width / gl.canvas.height, 1 / 256, 256);
         const inFrontOfCamera = [];
 
-        const radiansTheta = glMatrix.glMatrix.toRadian(theta);
-        const radiansPhi = glMatrix.glMatrix.toRadian(phi);
+        radiansTheta = glMatrix.glMatrix.toRadian(theta);
+        radiansPhi = glMatrix.glMatrix.toRadian(phi);
 
-        const direction = glMatrix.vec3.fromValues(
+        cameraDirection = glMatrix.vec3.fromValues(
           Math.sin(radiansTheta) * Math.cos(radiansPhi),
           Math.sin(radiansTheta) * Math.sin(radiansPhi),
           Math.cos(radiansTheta)
         );
 
-        glMatrix.vec3.add(inFrontOfCamera, cameraPos, direction);
+        glMatrix.vec3.add(inFrontOfCamera, cameraPos, cameraDirection);
 
         glMatrix.mat4.lookAt(view, cameraPos, inFrontOfCamera, glMatrix.vec3.fromValues(0, 0, 1));
 

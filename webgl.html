@@ -44,16 +44,17 @@
         vec3 world_dir =
               normalize( inverse(view) * vec4(camera_dir, 0) ).xyz;
 
-        float t = cameraPos.y / -world_dir.y;
+        float t = cameraPos.z / -world_dir.z;
 
-        return cameraPos + t*world_dir;
+        return cameraPos + t * world_dir;
     }
 
     void main()
     {
-        world_pos = toWorldPos( vec3(position.x, 0, position.y) );
+        world_pos = toWorldPos(vec3(position.x, position.y, 0));
 
-        float height = 0.3; //texture2D(tex, world_pos.xz).r;
+        float height = normalize(sin(world_pos.x)); //texture2D(tex, world_pos.xz).r;
+        world_pos.z = .0;
 
         gl_Position = projection * view * vec4(world_pos, 1);
     }
@@ -69,13 +70,9 @@
       vec3 normal = normalize(cross(
                   dFdx(world_pos.xyz),
                   dFdy(world_pos.xyz)));
-      vec3 light = vec3(0, 1, 1);
+      vec3 light = normalize(vec3(0, 1, 1));
 
-      vec3 k = vec3(1, 1, 1);
-      outColor = vec4(0, 0, 0, 1);
-
-      //vec4(1, 0, 0, 0) *
-              // dot(normalize(-light), normalize(normal));
+      outColor = vec4(vec3(dot(light, normal)), 1);
     }
   </script>
 
@@ -160,25 +157,25 @@
 
       let indices = [];
 
-      for(let i=0; i<9; i++) {
-        for(let j=0; j<9; j++) {
-          indices.push(i + j * 10);
-          indices.push((i+1) + j * 10);
-          indices.push(i + (j+1) * 10);
+      for(let i=0; i<99; i++) {
+        for(let j=0; j<99; j++) {
+          indices.push(i + j * 100);
+          indices.push((i+1) + j * 100);
+          indices.push(i + (j+1) * 100);
 
-          indices.push((i+1) + j * 10);
-          indices.push((i+1) + (j+1) * 10);
-          indices.push(i + (j+1) * 10);
+          indices.push((i+1) + j * 100);
+          indices.push((i+1) + (j+1) * 100);
+          indices.push(i + (j+1) * 100);
         }
       }
 
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
       let vertices = [];
-      for(let i=0; i<10; i++) {
-        for(let j=0; j<10; j++) {
-          vertices.push((i / 9 * 2) - 1);
-          vertices.push((j / 9 * 2) - 1);
+      for(let i=0; i<100; i++) {
+        for(let j=0; j<100; j++) {
+          vertices.push((i / 99 * 2) - 1);
+          vertices.push((j / 99 * 2) - 1);
         }
       }
 
@@ -195,6 +192,10 @@
       }
     }
 
+    const ARROW_LEFT = 37;
+    const ARROW_RIGHT = 39;
+    const ARROW_UP = 38;
+    const ARROW_DOWN = 40;
 
     //
     // Start here
@@ -221,14 +222,31 @@
       const projectUniform = gl.getUniformLocation(gridProgram, "projection");
       gl.uniformMatrix4fv(projectUniform, false, project);
 
-      const view = glMatrix.mat4.create();
+      let view = glMatrix.mat4.create();
       glMatrix.mat4.lookAt(view, glMatrix.vec3.fromValues(0, 2, 2), glMatrix.vec3.fromValues(0, 0, 0), glMatrix.vec3.fromValues(0, 0, 1));
       const viewUniform = gl.getUniformLocation(gridProgram, "view");
       gl.uniformMatrix4fv(viewUniform, false, view);
 
-      const cameraPos = glMatrix.vec3.fromValues(0, 2, 2);
+      let cameraPos = glMatrix.vec3.fromValues(0, 2, 2);
       const cameraUniform = gl.getUniformLocation(gridProgram, "cameraPos");
       gl.uniform3fv(cameraUniform, cameraPos);
+
+      window.addEventListener('keydown', function(event) {
+        switch (event.keyCode) {
+        case ARROW_LEFT:
+          glMatrix.mat4.translate(view, view, glMatrix.vec3.fromValues(-1, 0, 0));
+          break;
+        case ARROW_UP:
+        glMatrix.mat4.translate(view, view, glMatrix.vec3.fromValues(0, 1, 0));
+          break;
+        case ARROW_RIGHT:
+        glMatrix.mat4.translate(view, view, glMatrix.vec3.fromValues(1, 0, 0));
+          break;
+        case ARROW_DOWN:
+        glMatrix.mat4.translate(view, view, glMatrix.vec3.fromValues(0, -1, 0));
+          break;
+      }
+      });
 
       function drawScene() {
         const canvas = document.querySelector('#glcanvas');
@@ -242,6 +260,8 @@
         gl.useProgram(gridProgram);
         gl.bindBuffer(gl.ARRAY_BUFFER, grid.vertexBuffer);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, grid.indexBuffer);
+
+        gl.uniformMatrix4fv(viewUniform, false, view);
 
         gl.enableVertexAttribArray(gridPositionAttribute);
         gl.vertexAttribPointer(gridPositionAttribute, 2, gl.FLOAT, false, 0, 0);

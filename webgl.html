@@ -278,8 +278,10 @@
 
       gl.useProgram(gridProgram);
 
+      const FIELD_OF_VIEW = glMatrix.glMatrix.toRadian(30);
+
       const project = glMatrix.mat4.create();
-      glMatrix.mat4.perspective(project, glMatrix.glMatrix.toRadian(45), gl.canvas.width / gl.canvas.height, 1 / 256, 256);
+      glMatrix.mat4.perspective(project, FIELD_OF_VIEW, gl.canvas.width / gl.canvas.height, 1 / 256, 256);
       const projectUniform = gl.getUniformLocation(gridProgram, "projection");
       gl.uniformMatrix4fv(projectUniform, false, project);
 
@@ -338,6 +340,17 @@
       }
       });
 
+      let moveCamera = false;
+      canvas.onmousedown = function(event) {
+        moveCamera = true;
+      };
+
+      canvas.onmouseup = function(event) {
+        lastX = null;
+        lastY = null;
+        moveCamera = false;
+      };
+
       let lastX = null;
       let lastY = null;
 
@@ -345,6 +358,9 @@
       let phi = 0;
 
       window.addEventListener('mousemove', (event) => {
+        if(!moveCamera) {
+          return;
+        }
         if(lastX === null) {
           lastX = event.clientX;
           lastY = event.clientY;
@@ -357,8 +373,8 @@
         lastX = event.clientX;
         lastY = event.clientY;
 
-        theta += -0.1 * yDiff;
-        phi += 0.1 * xDiff;
+        theta += -0.2 * yDiff;
+        phi += 0.2 * xDiff;
       });
 
       function drawScene() {
@@ -366,12 +382,16 @@
         resize(canvas);
 
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        glMatrix.mat4.perspective(project, glMatrix.glMatrix.toRadian(45), gl.canvas.width / gl.canvas.height, 1 / 256, 256);
+        glMatrix.mat4.perspective(project, FIELD_OF_VIEW, gl.canvas.width / gl.canvas.height, 1 / 256, 256);
         const inFrontOfCamera = [];
+
+        const radiansTheta = glMatrix.glMatrix.toRadian(theta);
+        const radiansPhi = glMatrix.glMatrix.toRadian(phi);
+
         const direction = glMatrix.vec3.fromValues(
-          Math.sin(glMatrix.glMatrix.toRadian(theta)) * Math.cos(glMatrix.glMatrix.toRadian(phi)),
-          Math.sin(glMatrix.glMatrix.toRadian(theta)) * Math.sin(glMatrix.glMatrix.toRadian(phi)),
-          Math.cos(glMatrix.glMatrix.toRadian(phi))
+          Math.sin(radiansTheta) * Math.cos(radiansPhi),
+          Math.sin(radiansTheta) * Math.sin(radiansPhi),
+          Math.cos(radiansTheta)
         );
 
         glMatrix.vec3.add(inFrontOfCamera, cameraPos, direction);

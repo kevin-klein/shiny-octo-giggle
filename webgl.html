@@ -338,6 +338,29 @@
       }
       });
 
+      let lastX = null;
+      let lastY = null;
+
+      let theta = 0;
+      let phi = 0;
+
+      window.addEventListener('mousemove', (event) => {
+        if(lastX === null) {
+          lastX = event.clientX;
+          lastY = event.clientY;
+
+          return;
+        }
+
+        const xDiff = lastX - event.clientX;
+        const yDiff = lastY - event.clientY;
+        lastX = event.clientX;
+        lastY = event.clientY;
+
+        theta += -0.1 * yDiff;
+        phi += 0.1 * xDiff;
+      });
+
       function drawScene() {
         const canvas = document.querySelector('#glcanvas');
         resize(canvas);
@@ -345,7 +368,14 @@
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         glMatrix.mat4.perspective(project, glMatrix.glMatrix.toRadian(45), gl.canvas.width / gl.canvas.height, 1 / 256, 256);
         const inFrontOfCamera = [];
-        glMatrix.vec3.add(inFrontOfCamera, cameraPos, glMatrix.vec3.fromValues(0, -1, 0));
+        const direction = glMatrix.vec3.fromValues(
+          Math.sin(glMatrix.glMatrix.toRadian(theta)) * Math.cos(glMatrix.glMatrix.toRadian(phi)),
+          Math.sin(glMatrix.glMatrix.toRadian(theta)) * Math.sin(glMatrix.glMatrix.toRadian(phi)),
+          Math.cos(glMatrix.glMatrix.toRadian(phi))
+        );
+
+        glMatrix.vec3.add(inFrontOfCamera, cameraPos, direction);
+
         glMatrix.mat4.lookAt(view, cameraPos, inFrontOfCamera, glMatrix.vec3.fromValues(0, 0, 1));
 
         gl.clearColor(0, 0, 0, 0);

@@ -279,16 +279,16 @@
       gl.useProgram(gridProgram);
 
       const project = glMatrix.mat4.create();
-      glMatrix.mat4.perspective(project, glMatrix.glMatrix.toRadian(60), gl.canvas.width / gl.canvas.height, 1 / 256, 256);
+      glMatrix.mat4.perspective(project, glMatrix.glMatrix.toRadian(45), gl.canvas.width / gl.canvas.height, 1 / 256, 256);
       const projectUniform = gl.getUniformLocation(gridProgram, "projection");
       gl.uniformMatrix4fv(projectUniform, false, project);
 
+      let cameraPos = glMatrix.vec3.fromValues(0, 2, 2);
       let view = glMatrix.mat4.create();
-      glMatrix.mat4.lookAt(view, glMatrix.vec3.fromValues(0, 2, 2), glMatrix.vec3.fromValues(0, 0, 0), glMatrix.vec3.fromValues(0, 0, 1));
+      glMatrix.mat4.lookAt(view, cameraPos, glMatrix.vec3.fromValues(0, 0, 0), glMatrix.vec3.fromValues(0, 0, 1));
       const viewUniform = gl.getUniformLocation(gridProgram, "view");
       gl.uniformMatrix4fv(viewUniform, false, view);
 
-      let cameraPos = glMatrix.vec3.fromValues(0, 2, 2);
       const cameraUniform = gl.getUniformLocation(gridProgram, "cameraPos");
       gl.uniform3fv(cameraUniform, cameraPos);
 
@@ -324,16 +324,16 @@
       window.addEventListener('keydown', function(event) {
         switch (event.keyCode) {
         case ARROW_LEFT:
-          glMatrix.mat4.translate(view, view, glMatrix.vec3.fromValues(-1, 0, 0));
+          glMatrix.vec3.add(cameraPos, cameraPos, glMatrix.vec3.fromValues(1, 0, 0));
           break;
         case ARROW_UP:
-        glMatrix.mat4.translate(view, view, glMatrix.vec3.fromValues(0, 1, 0));
+          glMatrix.vec3.add(cameraPos, cameraPos, glMatrix.vec3.fromValues(0, -1, 0));
           break;
         case ARROW_RIGHT:
-        glMatrix.mat4.translate(view, view, glMatrix.vec3.fromValues(1, 0, 0));
+          glMatrix.vec3.add(cameraPos, cameraPos, glMatrix.vec3.fromValues(-1, 0, 0));
           break;
         case ARROW_DOWN:
-        glMatrix.mat4.translate(view, view, glMatrix.vec3.fromValues(0, -1, 0));
+          glMatrix.vec3.add(cameraPos, cameraPos, glMatrix.vec3.fromValues(0, 1, 0));
           break;
       }
       });
@@ -343,7 +343,10 @@
         resize(canvas);
 
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        glMatrix.mat4.perspective(project, glMatrix.glMatrix.toRadian(60), gl.canvas.width / gl.canvas.height, 1 / 256, 256);
+        glMatrix.mat4.perspective(project, glMatrix.glMatrix.toRadian(45), gl.canvas.width / gl.canvas.height, 1 / 256, 256);
+        const inFrontOfCamera = [];
+        glMatrix.vec3.add(inFrontOfCamera, cameraPos, glMatrix.vec3.fromValues(0, -1, 0));
+        glMatrix.mat4.lookAt(view, cameraPos, inFrontOfCamera, glMatrix.vec3.fromValues(0, 0, 1));
 
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);

@@ -157,25 +157,27 @@
 
       let indices = [];
 
-      for(let i=0; i<99; i++) {
-        for(let j=0; j<99; j++) {
-          indices.push(i + j * 100);
-          indices.push((i+1) + j * 100);
-          indices.push(i + (j+1) * 100);
+      const SIZE = 100;
 
-          indices.push((i+1) + j * 100);
-          indices.push((i+1) + (j+1) * 100);
-          indices.push(i + (j+1) * 100);
+      for(let i=0; i<SIZE-1; i++) {
+        for(let j=0; j<SIZE-1; j++) {
+          indices.push(i + j * SIZE);
+          indices.push((i+1) + j * SIZE);
+          indices.push(i + (j+1) * SIZE);
+
+          indices.push((i+1) + j * SIZE);
+          indices.push((i+1) + (j+1) * SIZE);
+          indices.push(i + (j+1) * SIZE);
         }
       }
 
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
       let vertices = [];
-      for(let i=0; i<100; i++) {
-        for(let j=0; j<100; j++) {
-          vertices.push((i / 99 * 2) - 1);
-          vertices.push((j / 99 * 2) - 1);
+      for(let i=0; i<SIZE; i++) {
+        for(let j=0; j<SIZE; j++) {
+          vertices.push((i / (SIZE-1) * 2) - 1);
+          vertices.push((j / (SIZE-1) * 2) - 1);
         }
       }
 

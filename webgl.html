@@ -290,7 +290,7 @@
       const projectUniform = gl.getUniformLocation(gridProgram, "projection");
       gl.uniformMatrix4fv(projectUniform, false, project);
 
-      let cameraPos = glMatrix.vec3.fromValues(0, 5, 2);
+      let cameraPos = glMatrix.vec3.fromValues(-0.12463811039924622, 21.287080764770508, 12.000049591064453);
       let view = glMatrix.mat4.create();
       glMatrix.mat4.lookAt(view, cameraPos, glMatrix.vec3.fromValues(0, 0, 0), glMatrix.vec3.fromValues(0, 0, 1));
       const viewUniform = gl.getUniformLocation(gridProgram, "view");
@@ -373,7 +373,7 @@
       let lastX = null;
       let lastY = null;
 
-      let theta = 90;
+      let theta = 107;
       let phi = -90;
 
       window.addEventListener('mousemove', (event) => {
